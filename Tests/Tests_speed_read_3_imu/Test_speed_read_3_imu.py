@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Read linear velocity data from three BNO055 sensors simultaneously
+Read acceleration and gyroscope data from three BNO055 sensors simultaneously
 
 Hardware Setup:
 -------------
@@ -25,10 +25,10 @@ Sensor 3 (I2C3, address 0x28):
   - VIN → 3.3V (or 5V)
   - GND → GND
 
-Linear Velocity Data:
-- Returns (x, y, z) components in m/s
-- Represents velocity in 3D space
-- Requires sensor fusion mode (NDOF recommended)
+Sensor Data:
+- Acceleration: (x, y, z) components in m/s²
+- Gyroscope: (x, y, z) components in rad/s (angular velocity)
+- Both measurements are in the sensor's local coordinate frame
 """
 
 import time
@@ -38,13 +38,13 @@ from adafruit_extended_bus import ExtendedI2C as I2C
 import adafruit_bno055
 
 
-class TripleBNO055Velocity:
-    """Class to manage three BNO055 sensors and read linear velocity data."""
+class TripleBNO055AccelGyro:
+    """Class to manage three BNO055 sensors and read acceleration and gyroscope data."""
 
     def __init__(self):
         """Initialize all three BNO055 sensors."""
         print("=" * 70)
-        print("Initializing Three BNO055 Sensors for Linear Velocity Reading")
+        print("Initializing Three BNO055 Sensors for Acceleration and Gyroscope Reading")
         print("=" * 70)
 
         # Initialize I2C1 bus (hardware I2C on GPIO 2/3)
@@ -87,17 +87,24 @@ class TripleBNO055Velocity:
         print("All three sensors initialized successfully!")
         print("=" * 70)
 
-    def read_all_velocities(self):
-        """Read linear velocity data from all three sensors.
+    def read_all_data(self):
+        """Read acceleration and gyroscope data from all three sensors.
 
         Returns:
-            tuple: (sensor1_vel, sensor2_vel, sensor3_vel)
-                   Each velocity is (x, y, z) in m/s
+            tuple: ((accel1, gyro1), (accel2, gyro2), (accel3, gyro3))
+                   Each accel is (x, y, z) in m/s²
+                   Each gyro is (x, y, z) in rad/s
         """
-        vel1 = self.sensor1.linear_acceleration
-        vel2 = self.sensor2.linear_acceleration
-        vel3 = self.sensor3.linear_acceleration
-        return vel1, vel2, vel3
+        accel1 = self.sensor1.acceleration
+        gyro1 = self.sensor1.gyro
+        
+        accel2 = self.sensor2.acceleration
+        gyro2 = self.sensor2.gyro
+        
+        accel3 = self.sensor3.acceleration
+        gyro3 = self.sensor3.gyro
+        
+        return (accel1, gyro1), (accel2, gyro2), (accel3, gyro3)
 
     def get_calibration_status(self):
         """Get calibration status for all three sensors.
@@ -113,10 +120,10 @@ class TripleBNO055Velocity:
 
 
 def main():
-    """Main demonstration: Read linear velocities from all three sensors continuously."""
+    """Main demonstration: Read acceleration and gyroscope data from all three sensors continuously."""
     try:
         # Initialize sensors
-        sensors = TripleBNO055Velocity()
+        sensors = TripleBNO055AccelGyro()
         time.sleep(0.5)
 
         # Display calibration status
@@ -130,41 +137,67 @@ def main():
 
         # Continuous reading
         print("\n" + "=" * 70)
-        print("Reading linear velocity data from all three sensors (Press Ctrl+C to stop)")
+        print("Reading acceleration and gyroscope data from all three sensors")
+        print("Press Ctrl+C to stop")
         print("=" * 70)
-        print(f"\n{'Time':>6} | {'Sensor 1 Velocity (x, y, z) [m/s]':^40} | "
-              f"{'Sensor 2 Velocity (x, y, z) [m/s]':^40} | "
-              f"{'Sensor 3 Velocity (x, y, z) [m/s]':^40}")
-        print("-" * 130)
+        print(f"\n{'Time':>6} | Sensor | {'Acceleration (x, y, z) [m/s²]':^35} | {'Gyroscope (x, y, z) [rad/s]':^35}")
+        print("-" * 100)
 
         start_time = time.time()
         while True:
-            # Read velocities from all sensors
-            vel1, vel2, vel3 = sensors.read_all_velocities()
-
-            # Extract values (handle None values)
-            if vel1 is not None and vel1[0] is not None:
-                x1, y1, z1 = vel1
-            else:
-                x1 = y1 = z1 = 0.0
-
-            if vel2 is not None and vel2[0] is not None:
-                x2, y2, z2 = vel2
-            else:
-                x2 = y2 = z2 = 0.0
-
-            if vel3 is not None and vel3[0] is not None:
-                x3, y3, z3 = vel3
-            else:
-                x3 = y3 = z3 = 0.0
+            # Read acceleration and gyro from all sensors
+            data1, data2, data3 = sensors.read_all_data()
+            accel1, gyro1 = data1
+            accel2, gyro2 = data2
+            accel3, gyro3 = data3
 
             elapsed = time.time() - start_time
 
-            # Display data
-            print(f"{elapsed:6.1f} | "
-                  f"{x1:8.3f}, {y1:8.3f}, {z1:8.3f} | "
-                  f"{x2:8.3f}, {y2:8.3f}, {z2:8.3f} | "
-                  f"{x3:8.3f}, {y3:8.3f}, {z3:8.3f}")
+            # Extract and display Sensor 1
+            if accel1 is not None and accel1[0] is not None:
+                ax1, ay1, az1 = accel1
+            else:
+                ax1 = ay1 = az1 = 0.0
+            
+            if gyro1 is not None and gyro1[0] is not None:
+                gx1, gy1, gz1 = gyro1
+            else:
+                gx1 = gy1 = gz1 = 0.0
+            
+            print(f"{elapsed:6.1f} | S1     | "
+                  f"{ax1:8.3f}, {ay1:8.3f}, {az1:8.3f} | "
+                  f"{gx1:8.3f}, {gy1:8.3f}, {gz1:8.3f}")
+
+            # Extract and display Sensor 2
+            if accel2 is not None and accel2[0] is not None:
+                ax2, ay2, az2 = accel2
+            else:
+                ax2 = ay2 = az2 = 0.0
+            
+            if gyro2 is not None and gyro2[0] is not None:
+                gx2, gy2, gz2 = gyro2
+            else:
+                gx2 = gy2 = gz2 = 0.0
+            
+            print(f"       | S2     | "
+                  f"{ax2:8.3f}, {ay2:8.3f}, {az2:8.3f} | "
+                  f"{gx2:8.3f}, {gy2:8.3f}, {gz2:8.3f}")
+
+            # Extract and display Sensor 3
+            if accel3 is not None and accel3[0] is not None:
+                ax3, ay3, az3 = accel3
+            else:
+                ax3 = ay3 = az3 = 0.0
+            
+            if gyro3 is not None and gyro3[0] is not None:
+                gx3, gy3, gz3 = gyro3
+            else:
+                gx3 = gy3 = gz3 = 0.0
+            
+            print(f"       | S3     | "
+                  f"{ax3:8.3f}, {ay3:8.3f}, {az3:8.3f} | "
+                  f"{gx3:8.3f}, {gy3:8.3f}, {gz3:8.3f}")
+            print("-" * 100)
 
             time.sleep(0.02)  # 50 Hz update rate
 
