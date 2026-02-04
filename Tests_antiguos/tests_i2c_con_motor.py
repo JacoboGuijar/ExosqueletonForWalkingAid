@@ -7,7 +7,7 @@ from ctypes import *
 CONFIGURACIÓN DEL MOTOR
 """
 # EPOS Command Library path
-path='/home/raspberry/Desktop/TFMExoesqueleto/ExosqueletonForWalkingAid-main/lib/EPOS_Linux_Library/lib/arm/v8/libEposCmd.so.6.8.1.0'
+path='/home/pi/Desktop/Repo/ExosqueletonForWalkingAid/Maxon_libraries_linux/EPOS_Linux_Library/lib/arm/v8/libEposCmd.so.6.8.1.0'
 
 # Load library
 cdll.LoadLibrary(path)

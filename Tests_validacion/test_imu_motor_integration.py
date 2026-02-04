@@ -233,7 +233,7 @@ def main():
     # Test parameters
     THRESHOLD = 3.0  # rad/s
     TEST_DURATION = 20  # seconds
-    MOTOR_ACTIVE_DURATION = 1.0  # seconds
+    MOTOR_ACTIVE_DURATION = 0.05  # seconds
     LOOP_RATE = 50  # Hz
     
     print("\n" + "=" * 70)
